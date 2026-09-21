@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PublicShell } from "@/components/public-shell";
-import { getOrganizationBySlug } from "@/features/content/public.service";
+import { getOrganizationBySlug } from "@/features/content/detail.service";
 
 type Props = { params: Promise<{ slug: string }> };
 

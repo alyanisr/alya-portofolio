@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PublicShell } from "@/components/public-shell";
-import { getAchievementBySlug } from "@/features/content/public.service";
+import { getAchievementBySlug } from "@/features/content/detail.service";
 
 type Props = { params: Promise<{ slug: string }> };
 

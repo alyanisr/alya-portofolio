@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PublicShell } from "@/components/public-shell";
-import { getLearningBySlug } from "@/features/content/public.service";
+import { getLearningBySlug } from "@/features/content/detail.service";
 
 type Props = { params: Promise<{ slug: string }> };
 
