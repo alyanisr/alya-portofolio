@@ -1,6 +1,6 @@
 "use server";
 
-import { BlockType, ContentStatus, Prisma, ProjectType, Visibility } from "@prisma/client";
+import { BlockType, ContentStatus, DocumentType, MediaType, Prisma, ProjectType, Visibility } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -18,6 +18,8 @@ const projectSchema = z.object({
 const relationSchema = z.object({ projectId: z.string().uuid(), value: z.string().uuid() });
 const roleSchema = z.object({ projectId: z.string().uuid(), title: z.string().trim().min(2).max(120), description: z.string().trim().max(2000).optional() });
 const blockSchema = z.object({ projectId: z.string().uuid(), type: z.enum(["HEADING", "TEXT", "QUOTE", "LIST"]), content: z.string().trim().min(1).max(8000) });
+const mediaSchema = z.object({ projectId: z.string().uuid(), url: z.string().trim().url().max(2048), title: z.string().trim().max(160).optional(), altText: z.string().trim().min(3).max(300), caption: z.string().trim().max(1000).optional(), type: z.nativeEnum(MediaType) });
+const documentSchema = z.object({ projectId: z.string().uuid(), title: z.string().trim().min(2).max(160), description: z.string().trim().max(1000).optional(), fileUrl: z.string().trim().url().max(2048), type: z.nativeEnum(DocumentType), visibility: z.nativeEnum(Visibility) });
 
 function snapshot(project: Record<string, unknown>) { return JSON.parse(JSON.stringify(project)) as Prisma.InputJsonValue; }
 async function recordProjectChange(userId: string, project: { id: string; slug: string }, action: "CREATE" | "UPDATE" | "PUBLISH" | "ARCHIVE", changeNote: string) {
@@ -63,4 +65,20 @@ export async function addProjectBlock(formData: FormData) {
 }
 export async function removeProjectBlock(formData: FormData) {
   const user = await requireAdmin(); const id = z.string().uuid().parse(formData.get("id")); const block = await db.projectBlock.delete({ where: { id } }); const project = await db.project.findUniqueOrThrow({ where: { id: block.projectId } }); await recordProjectChange(user.id, project, "UPDATE", "Removed structured story block."); refreshProject(project.slug);
+}
+export async function addProjectMedia(formData: FormData) {
+  const user = await requireAdmin(); const parsed = mediaSchema.safeParse(Object.fromEntries(formData)); if (!parsed.success) throw new Error("Media data is invalid. A descriptive alt text is required.");
+  const count = await db.projectMedia.count({ where: { projectId: parsed.data.projectId } }); const media = await db.media.create({ data: { storageKey: parsed.data.url, url: parsed.data.url, type: parsed.data.type, title: parsed.data.title || null, altText: parsed.data.altText, caption: parsed.data.caption || null } });
+  await db.projectMedia.create({ data: { projectId: parsed.data.projectId, mediaId: media.id, sortOrder: count, isCover: count === 0, caption: parsed.data.caption || null } }); const project = await db.project.findUniqueOrThrow({ where: { id: parsed.data.projectId } }); await recordProjectChange(user.id, project, "UPDATE", "Attached project media."); refreshProject(project.slug);
+}
+export async function removeProjectMedia(formData: FormData) {
+  const user = await requireAdmin(); const id = z.string().uuid().parse(formData.get("id")); const attachment = await db.projectMedia.delete({ where: { id } }); const project = await db.project.findUniqueOrThrow({ where: { id: attachment.projectId } }); await recordProjectChange(user.id, project, "UPDATE", "Removed project media attachment."); refreshProject(project.slug);
+}
+export async function addProjectDocument(formData: FormData) {
+  const user = await requireAdmin(); const parsed = documentSchema.safeParse(Object.fromEntries(formData)); if (!parsed.success) throw new Error("Document data is invalid.");
+  const count = await db.projectDocument.count({ where: { projectId: parsed.data.projectId } }); const document = await db.document.create({ data: { title: parsed.data.title, description: parsed.data.description || null, fileUrl: parsed.data.fileUrl, storageKey: parsed.data.fileUrl, type: parsed.data.type, visibility: parsed.data.visibility } });
+  await db.projectDocument.create({ data: { projectId: parsed.data.projectId, documentId: document.id, sortOrder: count } }); const project = await db.project.findUniqueOrThrow({ where: { id: parsed.data.projectId } }); await recordProjectChange(user.id, project, "UPDATE", "Attached project document."); refreshProject(project.slug);
+}
+export async function removeProjectDocument(formData: FormData) {
+  const user = await requireAdmin(); const id = z.string().uuid().parse(formData.get("id")); const attachment = await db.projectDocument.delete({ where: { id } }); const project = await db.project.findUniqueOrThrow({ where: { id: attachment.projectId } }); await recordProjectChange(user.id, project, "UPDATE", "Removed project document attachment."); refreshProject(project.slug);
 }

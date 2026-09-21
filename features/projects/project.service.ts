@@ -11,8 +11,8 @@ const projectInclude = {
   roles: { orderBy: { sortOrder: "asc" as const } },
   skills: { include: { skill: true } },
   tags: { include: { tag: true } },
-  media: { include: { media: true }, orderBy: { sortOrder: "asc" as const } },
-  documents: { include: { document: true }, orderBy: { sortOrder: "asc" as const } },
+  media: { where: { media: { deletedAt: null } }, include: { media: true }, orderBy: { sortOrder: "asc" as const } },
+  documents: { where: { document: { deletedAt: null, visibility: Visibility.PUBLIC } }, include: { document: true }, orderBy: { sortOrder: "asc" as const } },
   contentBlocks: { orderBy: { sortOrder: "asc" as const } },
   experiences: {
     include: {
