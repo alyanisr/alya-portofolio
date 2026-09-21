@@ -53,6 +53,8 @@ export async function getProjectsForLens(slug: string) {
       },
       skills: { orderBy: { priority: "asc" }, include: { skill: true } },
       experiences: { orderBy: { priority: "asc" }, include: { experience: true } },
+      achievements: { orderBy: { priority: "asc" }, include: { achievement: true } },
+      resumes: { where: { active: true }, orderBy: { priority: "asc" }, include: { resume: true } },
     },
   });
   if (!lens) return null;
@@ -60,6 +62,8 @@ export async function getProjectsForLens(slug: string) {
     ...lens,
     projects: lens.projects.filter(({ project }) => isPublic(project)),
     experiences: lens.experiences.filter(({ experience }) => isPublic(experience)),
+    achievements: lens.achievements.filter(({ achievement }) => isPublic(achievement)),
+    resumes: lens.resumes.filter(({ resume }) => resume.visibility === Visibility.PUBLIC && !resume.deletedAt),
     skills: lens.skills.filter(({ skill }) => skill.visibility === Visibility.PUBLIC && !skill.deletedAt),
   };
 }
