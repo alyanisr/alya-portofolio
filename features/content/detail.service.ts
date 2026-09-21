@@ -32,3 +32,21 @@ export async function getLearningBySlug(slug: string) {
     include: { skills: { include: { skill: true } } },
   });
 }
+
+export async function getSkillCategoryBySlug(slug: string) {
+  return db.skillCategory.findFirst({
+    where: { slug, deletedAt: null },
+    include: {
+      skills: {
+        where: { visibility: Visibility.PUBLIC, deletedAt: null },
+        include: {
+          projectSkills: {
+            where: { project: published },
+            include: { project: true },
+          },
+        },
+        orderBy: [{ featured: "desc" }, { sortOrder: "asc" }, { name: "asc" }],
+      },
+    },
+  });
+}
