@@ -1,0 +1,7 @@
+import Link from "next/link";
+import { PublicShell } from "@/components/public-shell";
+import { getPublishedAchievements, getPublishedLearning, getPublishedOrganizations } from "@/features/content/public.service";
+
+export const dynamic = "force-dynamic";
+export const metadata = { title: "Archive" };
+export default async function ArchivePage() { const [achievements, learning, organizations] = await Promise.all([getPublishedAchievements(), getPublishedLearning(), getPublishedOrganizations()]); return <PublicShell><section className="page-intro wrap"><p className="eyebrow">Archive</p><h1>Everything worth keeping.</h1><p>Supporting evidence, learning, achievements, and activity that add depth to the main narrative.</p></section><section className="content-list wrap"><h2 className="eyebrow">Achievements</h2>{achievements.map((item) => <article className="list-row" key={item.id}><span>{item.category}</span><h2>{item.title}</h2><p>{item.result ?? item.organization}</p><b>·</b></article>)}<h2 className="eyebrow" style={{ marginTop: "4rem" }}>Learning</h2>{learning.map((item) => <article className="list-row" key={item.id}><span>{item.maturity}</span><h2>{item.title}</h2><p>{item.description}</p><b>·</b></article>)}<h2 className="eyebrow" style={{ marginTop: "4rem" }}>Beyond the screen</h2>{organizations.map((item) => <article className="list-row" key={item.id}><span>Organization</span><h2>{item.name}</h2><p>{item.role} — {item.impact}</p><b>·</b></article>)}<Link className="text-link" href="/search">Search the archive →</Link></section></PublicShell>; }

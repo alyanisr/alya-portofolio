@@ -1,0 +1,1 @@
+export default function AdminContentPage() { return <><p className="eyebrow">Content operations</p><h1>Coming next: media, evidence, and relationships.</h1><p className="admin-intro">Project editorial workflow is active. The remaining CMS areas will use this same server-authorized, versioned pattern rather than expose raw database fields.</p></>; }

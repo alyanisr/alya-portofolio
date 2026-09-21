@@ -1,0 +1,1070 @@
+// This is your Prisma schema file for Alya Nisrina's Portfolio System
+// Learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ============================================================
+// ENUMS
+// ============================================================
+
+enum Role {
+  ADMIN
+  EDITOR
+}
+
+enum ContentStatus {
+  DRAFT
+  REVIEW
+  READY
+  PUBLISHED
+  ARCHIVED
+  UNLISTED
+}
+
+enum Visibility {
+  PUBLIC
+  RESTRICTED
+  PRIVATE
+}
+
+enum SkillMaturity {
+  CORE
+  USED
+  FAMILIAR
+  EXPLORING
+  LEARNING
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  PDF_PREVIEW
+  AUDIO
+  OTHER
+}
+
+enum DocumentType {
+  BRD
+  FRD
+  SRS
+  BPMN
+  CERTIFICATE
+  HAKI
+  PRESENTATION
+  REPORT
+  RESUME
+  OTHER
+}
+
+enum BlockType {
+  HEADING
+  TEXT
+  IMAGE
+  GALLERY
+  METRIC
+  QUOTE
+  LIST
+  DOCUMENT
+  EMBED
+}
+
+enum RelationType {
+  RELATED_TO
+  PART_OF
+  SUPPORTS
+  EVIDENCE_FOR
+  FOLLOW_UP
+  PREREQUISITE
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  PREVIEW
+  REVIEW
+  PUBLISH
+  ARCHIVE
+  DELETE
+  LOGIN
+  RESTORE
+}
+
+enum AchievementCategory {
+  COMPETITION
+  AWARD
+  SCHOLARSHIP
+  RECOGNITION
+  HAKI
+  CERTIFICATION
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  INTERNSHIP
+  CONTRACT
+  FREELANCE
+  VOLUNTEER
+}
+
+enum ProjectType {
+  PROFESSIONAL
+  ACADEMIC
+  COMPETITION
+  PERSONAL
+  ORGANIZATIONAL
+  EXPERIMENT
+}
+
+// ============================================================
+// AUTHENTICATION
+// ============================================================
+
+model User {
+  id              String           @id @default(uuid())
+  name            String
+  email           String           @unique
+  passwordHash    String
+  role            Role             @default(EDITOR)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  lastLoginAt     DateTime?
+  auditLogs       AuditLog[]
+  contentVersions ContentVersion[]
+
+  @@map("users")
+}
+
+// ============================================================
+// PERSON (Alya's personal profile)
+// ============================================================
+
+model Person {
+  id              String   @id @default(uuid())
+  name            String
+  tagline         String
+  headline        String
+  bio             String   @db.Text
+  philosophy      String   @db.Text
+  email           String
+  linkedin        String?
+  github          String?
+  location        String
+  availability    String?
+  photoUrl        String?
+  cvUrl           String?
+  metaTitle       String?
+  metaDescription String?
+  ogImage         String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("persons")
+}
+
+// ============================================================
+// EDUCATION
+// ============================================================
+
+model Education {
+  id            String     @id @default(uuid())
+  institution   String
+  degree        String
+  field         String
+  gpa           Float?
+  maxGpa        Float?
+  startDate     DateTime
+  endDate       DateTime?
+  isCurrent     Boolean    @default(false)
+  thesisTitle   String?
+  thesisTitleEn String?
+  description   String?    @db.Text
+  location      String?
+  achievements  String[]
+  visibility    Visibility @default(PUBLIC)
+  sortOrder     Int        @default(0)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  deletedAt     DateTime?
+
+  @@map("education")
+}
+
+// ============================================================
+// SKILL CATEGORIES
+// ============================================================
+
+model SkillCategory {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  slug        String    @unique
+  description String?
+  icon        String?
+  sortOrder   Int       @default(0)
+  skills      Skill[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  @@map("skill_categories")
+}
+
+// ============================================================
+// SKILLS
+// ============================================================
+
+model Skill {
+  id          String        @id @default(uuid())
+  name        String
+  slug        String        @unique
+  categoryId  String
+  category    SkillCategory @relation(fields: [categoryId], references: [id])
+  maturity    SkillMaturity @default(FAMILIAR)
+  description String?       @db.Text
+  evidence    String?       @db.Text // Short note on where/how used
+  featured    Boolean       @default(false)
+  sortOrder   Int           @default(0)
+  visibility  Visibility    @default(PUBLIC)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  deletedAt   DateTime?
+
+  // Relations
+  projectSkills       ProjectSkill[]
+  experienceSkills    ExperienceSkill[]
+  achievementSkills   AchievementSkill[]
+  certificationSkills CertificationSkill[]
+  trainingSkills      TrainingSkill[]
+  organizationSkills  OrganizationSkill[]
+  activitySkills      ActivitySkill[]
+  learningSkills      LearningSkill[]
+  roleLensSkills      RoleLensSkill[]
+
+  @@map("skills")
+}
+
+// ============================================================
+// EXPERIENCE
+// ============================================================
+
+model Experience {
+  id               String         @id @default(uuid())
+  company          String
+  role             String
+  slug             String         @unique
+  employmentType   EmploymentType @default(FULL_TIME)
+  location         String?
+  locationType     String? // Remote / Hybrid / On-site
+  startDate        DateTime
+  endDate          DateTime?
+  isCurrent        Boolean        @default(false)
+  summary          String         @db.Text
+  responsibilities String[]
+  impact           String?        @db.Text
+  metrics          Json? // { key: string, value: string }[]
+  status           ContentStatus  @default(PUBLISHED)
+  visibility       Visibility     @default(PUBLIC)
+  featured         Boolean        @default(false)
+  sortOrder        Int            @default(0)
+  metaTitle        String?
+  metaDescription  String?
+  ogImage          String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  deletedAt        DateTime?
+
+  // Relations
+  skills          ExperienceSkill[]
+  media           ExperienceMedia[]
+  documents       ExperienceDocument[]
+  projects        ExperienceProject[]
+  roleLensEntries RoleLensExperience[]
+
+  @@map("experiences")
+}
+
+model ExperienceDocument {
+  id           String     @id @default(uuid())
+  experienceId String
+  documentId   String
+  experience   Experience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+  document     Document   @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@map("experience_documents")
+}
+
+model ExperienceSkill {
+  experienceId String
+  skillId      String
+  experience   Experience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+  skill        Skill      @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([experienceId, skillId])
+  @@map("experience_skills")
+}
+
+model ExperienceMedia {
+  id           String     @id @default(uuid())
+  experienceId String
+  mediaId      String
+  experience   Experience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+  media        Media      @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  sortOrder    Int        @default(0)
+  isCover      Boolean    @default(false)
+  caption      String?
+
+  @@map("experience_media")
+}
+
+model ExperienceProject {
+  experienceId String
+  projectId    String
+  experience   Experience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+  project      Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@id([experienceId, projectId])
+  @@map("experience_projects")
+}
+
+// ============================================================
+// PROJECTS
+// ============================================================
+
+model Project {
+  id              String        @id @default(uuid())
+  title           String
+  subtitle        String?
+  projectType     ProjectType   @default(ACADEMIC)
+  slug            String        @unique
+  overview        String        @db.Text
+  problem         String?       @db.Text
+  context         String?       @db.Text
+  objective       String?       @db.Text
+  myRole          String?       @db.Text
+  teamSize        Int?
+  teamDescription String?       @db.Text
+  approach        String?       @db.Text
+  process         String?       @db.Text
+  solution        String?       @db.Text
+  implementation  String?       @db.Text
+  collaboration   String?       @db.Text
+  result          String?       @db.Text
+  challenges      String?       @db.Text
+  learnings       String?       @db.Text
+  metrics         Json? // { label: string, value: string, unit?: string }[]
+  coverImage      String?
+  status          ContentStatus @default(DRAFT)
+  visibility      Visibility    @default(PUBLIC)
+  featured        Boolean       @default(false)
+  featuredOrder   Int           @default(0)
+  sortOrder       Int           @default(0)
+  startDate       DateTime?
+  endDate         DateTime?
+  githubUrl       String?
+  demoUrl         String?
+  metaTitle       String?
+  metaDescription String?
+  canonicalUrl    String?
+  ogTitle         String?
+  ogDescription   String?
+  ogImage         String?
+  noIndex         Boolean       @default(false)
+  publishedAt     DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  deletedAt       DateTime?
+
+  // Relations
+  roles               ProjectRole[]
+  skills              ProjectSkill[]
+  media               ProjectMedia[]
+  documents           ProjectDocument[]
+  tags                ProjectTag[]
+  contentBlocks       ProjectBlock[]
+  experiences         ExperienceProject[]
+  achievementProjects AchievementProject[]
+  roleLensEntries     RoleLensProject[]
+
+  @@map("projects")
+}
+
+model ProjectRole {
+  id          String  @id @default(uuid())
+  projectId   String
+  project     Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title       String
+  description String? @db.Text
+  sortOrder   Int     @default(0)
+
+  @@map("project_roles")
+}
+
+model ProjectBlock {
+  id        String    @id @default(uuid())
+  projectId String
+  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  type      BlockType
+  sortOrder Int       @default(0)
+  data      Json // Block-type-specific content
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@map("project_content_blocks")
+}
+
+model ProjectSkill {
+  projectId String
+  skillId   String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  skill     Skill   @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([projectId, skillId])
+  @@map("project_skills")
+}
+
+model ProjectMedia {
+  id        String  @id @default(uuid())
+  projectId String
+  mediaId   String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  media     Media   @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  sortOrder Int     @default(0)
+  isCover   Boolean @default(false)
+  caption   String?
+
+  @@map("project_media")
+}
+
+model ProjectDocument {
+  id         String   @id @default(uuid())
+  projectId  String
+  documentId String
+  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  sortOrder  Int      @default(0)
+
+  @@map("project_documents")
+}
+
+model Tag {
+  id       String       @id @default(uuid())
+  name     String       @unique
+  slug     String       @unique
+  projects ProjectTag[]
+
+  @@map("tags")
+}
+
+model ProjectTag {
+  projectId String
+  tagId     String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([projectId, tagId])
+  @@map("project_tags")
+}
+
+// ============================================================
+// ACHIEVEMENTS
+// ============================================================
+
+model Achievement {
+  id              String              @id @default(uuid())
+  title           String
+  slug            String              @unique
+  organization    String
+  category        AchievementCategory
+  date            DateTime
+  context         String?             @db.Text
+  myRole          String?             @db.Text
+  result          String?             @db.Text
+  significance    String?             @db.Text // Why it matters
+  credential      String? // HAKI number, certificate ID
+  credentialUrl   String?
+  featured        Boolean             @default(false)
+  featuredOrder   Int                 @default(0)
+  visibility      Visibility          @default(PUBLIC)
+  status          ContentStatus       @default(PUBLISHED)
+  metaTitle       String?
+  metaDescription String?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  deletedAt       DateTime?
+
+  // Relations
+  skills    AchievementSkill[]
+  media     AchievementMedia[]
+  documents AchievementDocument[]
+  projects  AchievementProject[]
+  roleLens  RoleLensAchievement[]
+
+  @@map("achievements")
+}
+
+model AchievementProject {
+  achievementId String
+  projectId     String
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  project       Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@id([achievementId, projectId])
+  @@map("achievement_projects")
+}
+
+model AchievementSkill {
+  achievementId String
+  skillId       String
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  skill         Skill       @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([achievementId, skillId])
+  @@map("achievement_skills")
+}
+
+model AchievementMedia {
+  id            String      @id @default(uuid())
+  achievementId String
+  mediaId       String
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  media         Media       @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  sortOrder     Int         @default(0)
+  isCover       Boolean     @default(false)
+
+  @@map("achievement_media")
+}
+
+model AchievementDocument {
+  id            String      @id @default(uuid())
+  achievementId String
+  documentId    String
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  document      Document    @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@map("achievement_documents")
+}
+
+// ============================================================
+// CERTIFICATIONS
+// ============================================================
+
+model Certification {
+  id            String        @id @default(uuid())
+  name          String
+  slug          String        @unique
+  issuer        String
+  issueDate     DateTime
+  expiryDate    DateTime?
+  credentialId  String?
+  credentialUrl String?
+  description   String?       @db.Text
+  visibility    Visibility    @default(PUBLIC)
+  status        ContentStatus @default(PUBLISHED)
+  sortOrder     Int           @default(0)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  deletedAt     DateTime?
+
+  skills    CertificationSkill[]
+  documents CertificationDocument[]
+
+  @@map("certifications")
+}
+
+model CertificationSkill {
+  certificationId String
+  skillId         String
+  certification   Certification @relation(fields: [certificationId], references: [id], onDelete: Cascade)
+  skill           Skill         @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([certificationId, skillId])
+  @@map("certification_skills")
+}
+
+model CertificationDocument {
+  id              String        @id @default(uuid())
+  certificationId String
+  documentId      String
+  certification   Certification @relation(fields: [certificationId], references: [id], onDelete: Cascade)
+  document        Document      @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@map("certification_documents")
+}
+
+// ============================================================
+// TRAINING
+// ============================================================
+
+model Training {
+  id          String        @id @default(uuid())
+  title       String
+  slug        String        @unique
+  organizer   String
+  date        DateTime
+  duration    String?
+  description String?       @db.Text
+  certificate String? // URL
+  visibility  Visibility    @default(PUBLIC)
+  status      ContentStatus @default(PUBLISHED)
+  sortOrder   Int           @default(0)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  deletedAt   DateTime?
+
+  skills    TrainingSkill[]
+  documents TrainingDocument[]
+  media     TrainingMedia[]
+
+  @@map("trainings")
+}
+
+model TrainingSkill {
+  trainingId String
+  skillId    String
+  training   Training @relation(fields: [trainingId], references: [id], onDelete: Cascade)
+  skill      Skill    @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([trainingId, skillId])
+  @@map("training_skills")
+}
+
+model TrainingDocument {
+  id         String   @id @default(uuid())
+  trainingId String
+  documentId String
+  training   Training @relation(fields: [trainingId], references: [id], onDelete: Cascade)
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@map("training_documents")
+}
+
+model TrainingMedia {
+  id         String   @id @default(uuid())
+  trainingId String
+  mediaId    String
+  training   Training @relation(fields: [trainingId], references: [id], onDelete: Cascade)
+  media      Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  sortOrder  Int      @default(0)
+  isCover    Boolean  @default(false)
+
+  @@map("training_media")
+}
+
+// ============================================================
+// ORGANIZATIONS
+// ============================================================
+
+model Organization {
+  id               String        @id @default(uuid())
+  name             String
+  slug             String        @unique
+  role             String
+  startDate        DateTime
+  endDate          DateTime?
+  isCurrent        Boolean       @default(false)
+  description      String?       @db.Text
+  responsibilities String[]
+  initiatives      String[]
+  impact           String?       @db.Text
+  memberCount      Int?
+  departmentCount  Int?
+  visibility       Visibility    @default(PUBLIC)
+  status           ContentStatus @default(PUBLISHED)
+  sortOrder        Int           @default(0)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  deletedAt        DateTime?
+
+  skills     OrganizationSkill[]
+  media      OrganizationMedia[]
+  activities Activity[]
+
+  @@map("organizations")
+}
+
+model OrganizationSkill {
+  organizationId String
+  skillId        String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  skill          Skill        @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([organizationId, skillId])
+  @@map("organization_skills")
+}
+
+model OrganizationMedia {
+  id             String       @id @default(uuid())
+  organizationId String
+  mediaId        String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  media          Media        @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  sortOrder      Int          @default(0)
+  isCover        Boolean      @default(false)
+
+  @@map("organization_media")
+}
+
+// ============================================================
+// ACTIVITIES
+// ============================================================
+
+model Activity {
+  id             String        @id @default(uuid())
+  title          String
+  slug           String        @unique
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  role           String?
+  date           DateTime?
+  startDate      DateTime?
+  endDate        DateTime?
+  description    String?       @db.Text
+  outcome        String?       @db.Text
+  status         ContentStatus @default(PUBLISHED)
+  visibility     Visibility    @default(PUBLIC)
+  featured       Boolean       @default(false)
+  sortOrder      Int           @default(0)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  deletedAt      DateTime?
+
+  skills ActivitySkill[]
+  media  ActivityMedia[]
+
+  @@map("activities")
+}
+
+model ActivitySkill {
+  activityId String
+  skillId    String
+  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  skill      Skill    @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([activityId, skillId])
+  @@map("activity_skills")
+}
+
+model ActivityMedia {
+  id         String   @id @default(uuid())
+  activityId String
+  mediaId    String
+  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  media      Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  sortOrder  Int      @default(0)
+  isCover    Boolean  @default(false)
+
+  @@map("activity_media")
+}
+
+// ============================================================
+// LEARNING
+// ============================================================
+
+model LearningItem {
+  id           String        @id @default(uuid())
+  title        String
+  slug         String        @unique
+  category     String // e.g. "ERP", "Cloud", "Architecture"
+  maturity     SkillMaturity @default(EXPLORING)
+  description  String?       @db.Text
+  why          String?       @db.Text // Why exploring this
+  progressNote String?       @db.Text
+  resourceUrl  String?
+  visibility   Visibility    @default(PUBLIC)
+  status       ContentStatus @default(PUBLISHED)
+  sortOrder    Int           @default(0)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  deletedAt    DateTime?
+
+  skills LearningSkill[]
+
+  @@map("learning_items")
+}
+
+model LearningSkill {
+  learningId String
+  skillId    String
+  learning   LearningItem @relation(fields: [learningId], references: [id], onDelete: Cascade)
+  skill      Skill        @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([learningId, skillId])
+  @@map("learning_skills")
+}
+
+// ============================================================
+// MEDIA
+// ============================================================
+
+model Media {
+  id          String    @id @default(uuid())
+  storageKey  String // Path in storage (S3 key or local path)
+  url         String // Public URL
+  type        MediaType @default(IMAGE)
+  title       String?
+  altText     String?
+  caption     String?
+  description String?
+  width       Int?
+  height      Int?
+  mimeType    String?
+  fileSize    Int? // bytes
+  metadata    Json?
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  // Reverse relations
+  projectMedia      ProjectMedia[]
+  experienceMedia   ExperienceMedia[]
+  achievementMedia  AchievementMedia[]
+  trainingMedia     TrainingMedia[]
+  organizationMedia OrganizationMedia[]
+  activityMedia     ActivityMedia[]
+
+  @@map("media")
+}
+
+// ============================================================
+// DOCUMENTS
+// ============================================================
+
+model Document {
+  id          String       @id @default(uuid())
+  title       String
+  description String?      @db.Text
+  type        DocumentType @default(OTHER)
+  fileUrl     String
+  storageKey  String?
+  mimeType    String?
+  fileSize    Int?
+  version     String?
+  visibility  Visibility   @default(PRIVATE)
+  sortOrder   Int          @default(0)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  deletedAt   DateTime?
+
+  // Reverse relations
+  projectDocuments       ProjectDocument[]
+  experienceDocuments    ExperienceDocument[]
+  achievementDocuments   AchievementDocument[]
+  certificationDocuments CertificationDocument[]
+  trainingDocuments      TrainingDocument[]
+  resumeDocuments        ResumeDocument[]
+
+  @@map("documents")
+}
+
+// ============================================================
+// RESUMES / CVs
+// ============================================================
+
+model Resume {
+  id         String     @id @default(uuid())
+  title      String // e.g. "General CV", "Business Analyst CV"
+  fileUrl    String
+  storageKey String?
+  version    String?
+  date       DateTime?
+  active     Boolean    @default(true)
+  visibility Visibility @default(PUBLIC)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  deletedAt  DateTime?
+
+  documents       ResumeDocument[]
+  roleLensEntries RoleLensResume[]
+
+  @@map("resumes")
+}
+
+model ResumeDocument {
+  resumeId   String
+  documentId String
+  resume     Resume   @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@id([resumeId, documentId])
+  @@map("resume_documents")
+}
+
+// ============================================================
+// RECRUITER LENS
+// ============================================================
+
+model RoleLens {
+  id        String   @id @default(uuid())
+  name      String // Display name, e.g. "Business Analyst"
+  slug      String   @unique // e.g. "business-analysis"
+  headline  String // Lens-specific headline for Alya
+  intro     String   @db.Text // Lens-specific intro paragraph
+  ctaText   String? // e.g. "Download BA Resume"
+  ctaUrl    String? // Link to lens-specific CV
+  active    Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  projects     RoleLensProject[]
+  experiences  RoleLensExperience[]
+  skills       RoleLensSkill[]
+  achievements RoleLensAchievement[]
+  resumes      RoleLensResume[]
+
+  @@map("role_lenses")
+}
+
+model RoleLensResume {
+  lensId   String
+  resumeId String
+  lens     RoleLens @relation(fields: [lensId], references: [id], onDelete: Cascade)
+  resume   Resume   @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  priority Int      @default(0)
+  active   Boolean  @default(true)
+
+  @@id([lensId, resumeId])
+  @@map("role_lens_resumes")
+}
+
+model RoleLensProject {
+  lensId    String
+  projectId String
+  lens      RoleLens @relation(fields: [lensId], references: [id], onDelete: Cascade)
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  priority  Int      @default(0) // Higher = more prominent
+  highlight Boolean  @default(false)
+  note      String? // Lens-specific context note
+
+  @@id([lensId, projectId])
+  @@map("role_lens_projects")
+}
+
+model RoleLensExperience {
+  lensId       String
+  experienceId String
+  lens         RoleLens   @relation(fields: [lensId], references: [id], onDelete: Cascade)
+  experience   Experience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+  priority     Int        @default(0)
+  highlight    Boolean    @default(false)
+  note         String?
+
+  @@id([lensId, experienceId])
+  @@map("role_lens_experiences")
+}
+
+model RoleLensSkill {
+  lensId    String
+  skillId   String
+  lens      RoleLens @relation(fields: [lensId], references: [id], onDelete: Cascade)
+  skill     Skill    @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  priority  Int      @default(0)
+  highlight Boolean  @default(false)
+
+  @@id([lensId, skillId])
+  @@map("role_lens_skills")
+}
+
+model RoleLensAchievement {
+  lensId        String
+  achievementId String
+  lens          RoleLens    @relation(fields: [lensId], references: [id], onDelete: Cascade)
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  priority      Int         @default(0)
+  highlight     Boolean     @default(false)
+
+  @@id([lensId, achievementId])
+  @@map("role_lens_achievements")
+}
+
+// ============================================================
+// GENERIC CONTENT RELATIONS
+// ============================================================
+
+model ContentRelation {
+  id           String       @id @default(uuid())
+  sourceType   String // e.g. "project", "skill", "experience"
+  sourceId     String
+  targetType   String
+  targetId     String
+  relationType RelationType @default(RELATED_TO)
+  sortOrder    Int          @default(0)
+  note         String?      @db.Text
+  createdAt    DateTime     @default(now())
+
+  @@unique([sourceType, sourceId, targetType, targetId, relationType])
+  @@index([sourceType, sourceId, sortOrder])
+  @@index([targetType, targetId, sortOrder])
+  @@map("content_relations")
+}
+
+// ============================================================
+// CONTENT VERSIONING
+// ============================================================
+
+model ContentVersion {
+  id          String   @id @default(uuid())
+  contentType String
+  contentId   String
+  version     Int
+  snapshot    Json
+  changeNote  String?  @db.Text
+  createdById String?
+  createdBy   User?    @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+
+  @@unique([contentType, contentId, version])
+  @@index([contentType, contentId])
+  @@map("content_versions")
+}
+
+// ============================================================
+// AUDIT LOG
+// ============================================================
+
+model AuditLog {
+  id         String      @id @default(uuid())
+  userId     String
+  user       User        @relation(fields: [userId], references: [id])
+  action     AuditAction
+  entityType String
+  entityId   String
+  metadata   Json?
+  createdAt  DateTime    @default(now())
+
+  @@map("audit_logs")
+}
+
+// ============================================================
+// HOMEPAGE CONFIGURATION
+// ============================================================
+
+model HomepageConfig {
+  id                     String   @id @default(uuid())
+  heroTagline            String
+  heroHeadline           String
+  heroSubheadline        String
+  heroCta1Text           String
+  heroCta1Url            String
+  heroCta2Text           String?
+  heroCta2Url            String?
+  featuredProjectIds     String[] // Ordered list of project IDs for Selected Work
+  featuredExperienceIds  String[]
+  featuredAchievementIds String[]
+  featuredSkillIds       String[]
+  featuredLearningIds    String[]
+  featuredLensIds        String[] // Ordered list of recruiter lens IDs for homepage emphasis
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  @@map("homepage_configs")
+}
