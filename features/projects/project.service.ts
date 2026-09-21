@@ -12,6 +12,8 @@ const projectInclude = {
   skills: { include: { skill: true } },
   tags: { include: { tag: true } },
   media: { include: { media: true }, orderBy: { sortOrder: "asc" as const } },
+  documents: { include: { document: true }, orderBy: { sortOrder: "asc" as const } },
+  contentBlocks: { orderBy: { sortOrder: "asc" as const } },
   experiences: {
     include: {
       experience: {
