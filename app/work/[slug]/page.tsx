@@ -9,7 +9,12 @@ import { ProjectEvidence } from "@/components/project-evidence";
 
 export const dynamic = "force-dynamic";
 type Props = { params: Promise<{ slug: string }> };
-export async function generateMetadata({ params }: Props): Promise<Metadata> { const project = await getProjectBySlug((await params).slug); return project ? { title: project.metaTitle ?? project.title, description: project.metaDescription ?? project.overview, robots: project.noIndex ? { index: false } : undefined } : {}; }
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const project = await getProjectBySlug((await params).slug);
+  if (!project) return {};
+  const title = project.metaTitle ?? project.title; const description = project.metaDescription ?? project.overview;
+  return { title, description, alternates: project.canonicalUrl ? { canonical: project.canonicalUrl } : undefined, robots: project.noIndex ? { index: false } : undefined, openGraph: { title: project.ogTitle ?? title, description: project.ogDescription ?? description, images: project.ogImage ? [project.ogImage] : undefined } };
+}
 export default async function ProjectPage({ params }: Props) {
   const project = await getProjectBySlug((await params).slug); if (!project) notFound();
   const relatedContent = await getRelatedContent("project", project.id);
