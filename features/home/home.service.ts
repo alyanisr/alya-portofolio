@@ -3,7 +3,7 @@ import { getFeaturedProjects } from "@/features/projects/project.service";
 import { getPublishedAchievements, getPublishedExperiences, getPublishedLearning, getPublishedSkillCategories } from "@/features/content/public.service";
 
 export async function getHomepage() {
-  const [config, person, projects, experiences, achievements, skillCategories, learning] = await Promise.all([
+  const [config, person, projects, experiences, achievements, skillCategories, learning, lenses] = await Promise.all([
     db.homepageConfig.findFirst(),
     db.person.findFirst(),
     getFeaturedProjects(),
@@ -11,6 +11,7 @@ export async function getHomepage() {
     getPublishedAchievements(),
     getPublishedSkillCategories(),
     getPublishedLearning(),
+    db.roleLens.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" } }),
   ]);
   return {
     config,
@@ -20,6 +21,7 @@ export async function getHomepage() {
     achievements: orderByConfiguredIds(achievements, config?.featuredAchievementIds).slice(0, 4),
     skillCategories,
     learning: orderByConfiguredIds(learning, config?.featuredLearningIds).slice(0, 4),
+    lenses: orderByConfiguredIds(lenses, config?.featuredLensIds).slice(0, 7),
   };
 }
 
