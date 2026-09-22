@@ -15,6 +15,12 @@ const projectSchema = z.object({
   githubUrl: optionalUrl, demoUrl: optionalUrl, metaTitle: z.string().trim().max(160).transform((value) => value || null), metaDescription: z.string().trim().max(320).transform((value) => value || null), canonicalUrl: optionalUrl, ogTitle: z.string().trim().max(160).transform((value) => value || null), ogDescription: z.string().trim().max(320).transform((value) => value || null), ogImage: optionalUrl,
   status: z.nativeEnum(ContentStatus), visibility: z.nativeEnum(Visibility), featured: z.enum(["true", "false"]), noIndex: z.enum(["true", "false"]),
 });
+const createProjectSchema = z.object({
+  title: z.string().trim().min(2).max(160),
+  slug: z.string().trim().min(2).max(160).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Use lowercase words separated by hyphens."),
+  projectType: z.nativeEnum(ProjectType),
+  overview: z.string().trim().min(10).max(5000),
+});
 const relationSchema = z.object({ projectId: z.string().uuid(), value: z.string().uuid() });
 const roleSchema = z.object({ projectId: z.string().uuid(), title: z.string().trim().min(2).max(120), description: z.string().trim().max(2000).optional() });
 const blockSchema = z.object({ projectId: z.string().uuid(), type: z.enum(["HEADING", "TEXT", "QUOTE", "LIST"]), content: z.string().trim().min(1).max(8000) });
@@ -31,6 +37,18 @@ async function recordProjectChange(userId: string, project: { id: string; slug: 
   ]);
 }
 function refreshProject(slug: string) { revalidatePath("/"); revalidatePath("/work"); revalidatePath(`/work/${slug}`); revalidatePath("/admin/projects"); revalidatePath(`/admin/projects/${slug}`); }
+
+export async function createProject(formData: FormData) {
+  const user = await requireAdmin();
+  const parsed = createProjectSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) throw new Error("Project needs a title, a stable lowercase slug, and a concise overview.");
+  const existing = await db.project.findUnique({ where: { slug: parsed.data.slug }, select: { id: true } });
+  if (existing) throw new Error("That project slug is already in use.");
+  const project = await db.project.create({ data: { ...parsed.data, status: ContentStatus.DRAFT, visibility: Visibility.PRIVATE, featured: false } });
+  await recordProjectChange(user.id, project, "CREATE", "Created a new private project draft.");
+  refreshProject(project.slug);
+  redirect(`/admin/projects/${project.slug}`);
+}
 
 export async function updateProject(formData: FormData) {
   const user = await requireAdmin(); const parsed = projectSchema.safeParse(Object.fromEntries(formData)); if (!parsed.success) throw new Error("Project data is invalid.");
