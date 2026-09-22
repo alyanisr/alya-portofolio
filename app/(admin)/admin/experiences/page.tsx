@@ -1,0 +1,5 @@
+import Link from "next/link";
+import { db } from "@/lib/db";
+import { archiveExperience, restoreExperience } from "@/app/(admin)/admin/experiences/actions";
+export const dynamic = "force-dynamic";
+export default async function ExperiencesPage() { const items = await db.experience.findMany({ orderBy: { updatedAt: "desc" } }); return <><p className="eyebrow">Experience</p><h1>Career evidence, not job-title claims.</h1><p className="admin-intro">Create, edit, relate, review, publish, archive, and restore each experience from one place.</p><Link className="button" href="/admin/experiences/new">New experience</Link><div className="admin-list">{items.map((item) => <div key={item.id} className="admin-list-row"><Link href={`/admin/experiences/${item.slug}`}><b>{item.company} — {item.role}</b><span>{item.deletedAt ? "archived" : `${item.status.toLowerCase()} · ${item.visibility.toLowerCase()}`}</span></Link><form action={item.deletedAt ? restoreExperience : archiveExperience}><input type="hidden" name="id" value={item.id} /><button className="button">{item.deletedAt ? "Restore" : "Archive"}</button></form></div>)}</div></>; }
