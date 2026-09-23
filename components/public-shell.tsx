@@ -8,7 +8,21 @@ export function PublicShell({ children }: { children: ReactNode }) {
       <header className="site-header">
         <Link className="wordmark" href="/" aria-label="Alya Nisrina, home">ALYA<span>⌁</span></Link>
         <nav aria-label="Primary navigation">
-          <Link href="/work">Work</Link><Link href="/experience">Experience</Link><Link href="/about">Profile</Link>
+          <Link href="/work">Work</Link>
+          <Link href="/experience">Experience</Link>
+          <Link href="/capabilities">Capabilities</Link>
+          <Link href="/achievements">Recognition</Link>
+          <Link href="/about">Profile</Link>
+          <details className="nav-more">
+            <summary>More <span aria-hidden="true">+</span></summary>
+            <div>
+              <Link href="/learning">Learning</Link>
+              <Link href="/beyond">Beyond work</Link>
+              <Link href="/archive">Archive</Link>
+              <Link href="/contact">Contact</Link>
+              <Link href="/search">Search</Link>
+            </div>
+          </details>
         </nav>
         <Link className="nav-lens" href="/recruiter">For recruiters ↗</Link>
       </header>
