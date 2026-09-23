@@ -1,7 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  experimental: {
+    serverActions: {
+      // Evidence uploads are validated to 20 MB in the server action.
+      bodySizeLimit: "21mb",
+    },
+  },
 };
 
 export default nextConfig;

@@ -36,6 +36,7 @@ In production, the CMS is at `https://<your-domain>/admin`. It requires an `ADMI
 - Lifecycle states, visibility controls, soft deletion, audit logs, and content version snapshots.
 - Homepage curation, recruiter-lens priorities, CV management, and editorial cross-content relations.
 - Per-project metadata, `robots.txt`, sitemap, and published-public content filtering.
+- Neon Object Storage integration: authenticated CMS uploads, public media URLs, and temporary signed delivery for restricted/private documents.
 
 ## Setup
 
@@ -47,7 +48,7 @@ pnpm db:seed
 pnpm dev
 ```
 
-Set `DATABASE_URL`, `DIRECT_URL`, a 32+ character `AUTH_SECRET`, and safe local admin credentials in `.env.local`. Never commit `.env`, private CVs, confidential documents, or storage credentials.
+Set `DATABASE_URL`, `DIRECT_URL`, a 32+ character `AUTH_SECRET`, safe local admin credentials, and Neon storage variables in `.env.local`. Never commit `.env`, private CVs, confidential documents, or storage credentials.
 
 ## Content workflow
 
@@ -63,7 +64,7 @@ Code owns layout, visual system, motion, responsiveness, and interaction. The CM
 
 ```bash
 pnpm lint
-pnpm exec tsc --noEmit
+pnpm typecheck
 pnpm exec prisma validate
 pnpm exec next build --webpack
 ```
@@ -76,4 +77,4 @@ See [deployment runbook](docs/deployment.md) for the one-time Vercel/database se
 
 ## Remaining work
 
-Major remaining areas are object-storage upload and signed restricted delivery, preview/restore UI across every content type, organization/activity/education/profile operations, full-text search, generalized structured SEO, tests, analytics, deployment configuration, responsive QA, and intentional motion/3D polish.
+Major remaining areas are preview/restore UI across every content type, organization/activity/education/profile operations, full-text search, generalized structured SEO, tests, analytics, deployment configuration, responsive QA, and intentional motion/3D polish.
