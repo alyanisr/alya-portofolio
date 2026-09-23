@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import Image from "next/image";
 import { notFound } from "next/navigation";
 import { PublicShell } from "@/components/public-shell";
 import { getAchievementBySlug } from "@/features/content/detail.service";
+import { MediaRenderer } from "@/components/media-renderer";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -33,7 +33,7 @@ export default async function AchievementDetailPage({ params }: Props) {
         {achievement.projects.length > 0 && <><h2>Related work</h2><div className="tags">{achievement.projects.map(({ project }) => <Link key={project.id} href={`/work/${project.slug}`}>{project.title} →</Link>)}</div></>}
       </div>
       {achievement.documents.length > 0 && <section className="case-evidence documents" aria-labelledby="achievement-documents"><p className="eyebrow">Evidence</p><h2 id="achievement-documents">Supporting material.</h2>{achievement.documents.map(({ id, document }) => <a href={document.fileUrl} key={id} rel="noreferrer" target="_blank"><span>{document.type.toLowerCase()}</span><b>{document.title}</b>{document.description && <small>{document.description}</small>}<i>↗</i></a>)}</section>}
-      {achievement.media.length > 0 && <section className="case-evidence" aria-labelledby="achievement-gallery"><p className="eyebrow">Documentation</p><h2 id="achievement-gallery">The moment behind the milestone.</h2><div className="project-gallery">{achievement.media.filter(({ media }) => media.type === "IMAGE").map(({ id, media }) => <figure key={id}><Image src={media.url} alt={media.altText ?? media.title ?? "Achievement documentation"} width={1200} height={900} unoptimized /><figcaption>{media.caption ?? media.title}</figcaption></figure>)}</div></section>}
+      {achievement.media.length > 0 && <section className="case-evidence" aria-labelledby="achievement-gallery"><p className="eyebrow">Documentation</p><h2 id="achievement-gallery">The moment behind the milestone.</h2><div className="project-gallery">{achievement.media.map(({ id, media }) => <MediaRenderer key={id} asset={media} />)}</div></section>}
     </article>
   </PublicShell>;
 }
