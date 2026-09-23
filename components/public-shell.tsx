@@ -8,9 +8,9 @@ export function PublicShell({ children }: { children: ReactNode }) {
       <header className="site-header">
         <Link className="wordmark" href="/" aria-label="Alya Nisrina, home">ALYA<span>⌁</span></Link>
         <nav aria-label="Primary navigation">
-          <Link href="/work">Work</Link><Link href="/experience">Experience</Link><Link href="/about">About</Link><Link href="/archive">Archive</Link><Link href="/recruiter">Lenses</Link>
+          <Link href="/work">Work</Link><Link href="/experience">Experience</Link><Link href="/about">About</Link><Link href="/archive">Archive</Link>
         </nav>
-        <Link className="nav-lens" href="/recruiter">Recruiter lens ↗</Link>
+        <Link className="nav-lens" href="/recruiter">For recruiters ↗</Link>
       </header>
       <main id="content">{children}</main>
       <footer className="site-footer">
