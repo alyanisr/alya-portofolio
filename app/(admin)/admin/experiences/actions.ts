@@ -67,10 +67,10 @@ async function detach(formData: FormData, type: "skill" | "project" | "media" | 
   if (type === "document") { const link = await db.experienceDocument.findFirstOrThrow({ where: { experienceId, documentId: value } }); await db.experienceDocument.delete({ where: { id: link.id } }); }
   const experience = await db.experience.findUniqueOrThrow({ where: { id: experienceId } }); await record(user.id, experienceId, "UPDATE", `Detached ${type}.`); refresh(experience.slug);
 }
-export const attachExperienceSkill = (data: FormData) => attach(data, "skill"); export const detachExperienceSkill = (data: FormData) => detach(data, "skill");
-export const attachExperienceProject = (data: FormData) => attach(data, "project"); export const detachExperienceProject = (data: FormData) => detach(data, "project");
-export const attachExperienceMedia = (data: FormData) => attach(data, "media"); export const detachExperienceMedia = (data: FormData) => detach(data, "media");
-export const attachExperienceDocument = (data: FormData) => attach(data, "document"); export const detachExperienceDocument = (data: FormData) => detach(data, "document");
+export async function attachExperienceSkill(data: FormData) { return attach(data, "skill"); } export async function detachExperienceSkill(data: FormData) { return detach(data, "skill"); }
+export async function attachExperienceProject(data: FormData) { return attach(data, "project"); } export async function detachExperienceProject(data: FormData) { return detach(data, "project"); }
+export async function attachExperienceMedia(data: FormData) { return attach(data, "media"); } export async function detachExperienceMedia(data: FormData) { return detach(data, "media"); }
+export async function attachExperienceDocument(data: FormData) { return attach(data, "document"); } export async function detachExperienceDocument(data: FormData) { return detach(data, "document"); }
 
 export async function archiveExperience(formData: FormData) { const user = await requireAdmin(); const { id } = removeSchema.parse(Object.fromEntries(formData)); const item = await db.experience.update({ where: { id }, data: { status: ContentStatus.ARCHIVED, deletedAt: new Date() } }); await record(user.id, id, "ARCHIVE", "Archived through the experience CMS."); refresh(item.slug); redirect("/admin/experiences"); }
 export async function restoreExperience(formData: FormData) { const user = await requireAdmin(); const { id } = removeSchema.parse(Object.fromEntries(formData)); const item = await db.experience.update({ where: { id }, data: { status: ContentStatus.DRAFT, deletedAt: null } }); await record(user.id, id, "RESTORE", "Restored as a private draft."); refresh(item.slug); redirect(`/admin/experiences/${item.slug}`); }
