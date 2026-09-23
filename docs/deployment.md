@@ -33,6 +33,10 @@ The repository is prepared for Vercel's Git integration. GitHub Actions verifies
 
 ## Ongoing releases
 
+The workflow uses Node.js 24 and installs the repository-pinned pnpm 12.4.2
+CLI directly. This avoids relying on an action self-installer and keeps the
+CI runtime aligned with GitHub-hosted runner support.
+
 1. Push to a feature branch and open a pull request.
 2. Wait for the **CI / Verify application** GitHub check.
 3. Merge to `master` only after the check passes.

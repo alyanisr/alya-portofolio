@@ -24,7 +24,7 @@ jobs:
           POSTGRES_DB: alya_portfolio_ci
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
-        ports: [5432:5432]
+        ports: ["5432:5432"]
         options: >-
           --health-cmd "pg_isready -U postgres -d alya_portfolio_ci"
           --health-interval 10s
@@ -40,16 +40,17 @@ jobs:
       NEXT_PUBLIC_APP_URL: https://ci.example.test
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 12.4.2
+        uses: actions/checkout@v5
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
-          node-version: 20
-          cache: pnpm
+          node-version: 24
+      - name: Install pnpm CLI
+        run: npm install --global pnpm@12.4.2
+      - name: Confirm toolchain
+        run: |
+          node --version
+          pnpm --version
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Validate Prisma schema
