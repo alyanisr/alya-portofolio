@@ -1,82 +1,77 @@
-# Alya Nisrina Portfolio
+# Alya Nisrina — Portfolio System
 
-## Environment Variables
+An evidence-led personal portfolio for Alya Nisrina: a professional story, not a CV copied into pages. It presents how Alya understands problems, connects business and technology, builds solutions, validates them, and works with people.
 
-Copy `.env.example` to `.env.local` and fill in all values before running.
+One PostgreSQL-backed content system provides two surfaces:
+
+- Public portfolio: storytelling, case studies, recruiter lenses, archive, search, and SEO.
+- Admin CMS: authenticated content, evidence, CV, homepage, relationship, and recruiter-lens management.
+
+**Content once. Relate intelligently. Present differently.**
+
+## URLs
+
+For local development:
+
+- Public site: http://localhost:3000
+- Admin CMS: http://localhost:3000/admin
+- Login: http://localhost:3000/login
+
+In production, the CMS is at `https://<your-domain>/admin`. It requires an `ADMIN` account and is excluded from search indexing.
+
+## Product direction
+
+- Positioning: problem solver bridging business and technology.
+- Narrative: Understand → Analyze → Design → Build → Validate → Improve.
+- Visual direction: premium editorial × technical documentation × human storytelling.
+- Recruiter lenses: Business Analysis, Software Engineering, ERP / Functional, QA / Testing, IT Service & Operations, IT Project Management, and General.
+- Integrity: no fabricated metrics/experience, no skill-percentage bars, and no confidential company evidence published.
+
+## Current capabilities
+
+- Next.js App Router, TypeScript, Tailwind CSS, Motion, Prisma, and PostgreSQL modular monolith.
+- Public pages for home, work, experience, capabilities, achievements, beyond, learning, archive, recruiter lenses, contact, and search.
+- Relational models for projects, experience, skills, achievements, certifications, training, organizations, activities, learning, media, documents, resumes, and lenses.
+- CMS operations for projects, experience, achievements, capabilities, learning, certifications, and training.
+- Lifecycle states, visibility controls, soft deletion, audit logs, and content version snapshots.
+- Homepage curation, recruiter-lens priorities, CV management, and editorial cross-content relations.
+- Per-project metadata, `robots.txt`, sitemap, and published-public content filtering.
+
+## Setup
 
 ```bash
 cp .env.example .env.local
-```
-
-## Stack
-
-- **Framework**: Next.js 16 (App Router, TypeScript)
-- **Styling**: Tailwind CSS 4 + custom design tokens
-- **Animation**: Motion for React
-- **Database**: PostgreSQL via Prisma 6 ORM
-- **Package Manager**: pnpm 12
-
-## Architecture Direction
-
-This project is a modular monolith with two surfaces:
-
-- **Public Portfolio**: storytelling website, recruiter lens, search, SEO, and public content.
-- **Admin CMS**: authenticated content management for projects, experience, skills, achievements, media, documents, CVs, homepage curation, and recruiter lens priorities.
-
-Core principle:
-
-> Content once. Relate intelligently. Present differently.
-
-Code controls layout, typography, animation, interaction, and visual behavior. The CMS controls what Alya's portfolio says.
-
-## Getting Started
-
-```bash
 pnpm install
-pnpm exec prisma migrate dev
-pnpm exec prisma db seed
+pnpm exec prisma migrate deploy
+pnpm db:seed
 pnpm dev
 ```
 
-## Foundation Status
+Set `DATABASE_URL`, `DIRECT_URL`, a 32+ character `AUTH_SECRET`, and safe local admin credentials in `.env.local`. Never commit `.env`, private CVs, confidential documents, or storage credentials.
 
-Implemented:
+## Content workflow
 
-- Next.js, TypeScript, Tailwind, Prisma, PostgreSQL-oriented environment scaffold.
-- Prisma schema baseline for the portfolio content system.
-- UUID defaults for internal IDs.
-- Content status workflow support: `DRAFT`, `REVIEW`, `READY`, `PUBLISHED`, `ARCHIVED`, `UNLISTED`.
-- Relationship-first content models for projects, skills, experience, achievements, media, documents, resumes, and recruiter lenses.
-- `ContentVersion` baseline for version snapshots.
-- `Activity` content model for beyond-the-screen content.
-- Design token variables in `app/globals.css`.
+1. Create a private draft in `/admin`.
+2. Add the story, skills, projects, evidence, and editorial relations.
+3. Confirm document visibility; public pages only show public evidence.
+4. Move content through `DRAFT → REVIEW → READY → PUBLISHED`.
+5. Archive instead of deleting; restore returns content to draft.
 
-Implemented so far:
+Code owns layout, visual system, motion, responsiveness, and interaction. The CMS owns the content, evidence metadata, visibility, relationships, ordering, and recruiter priorities.
 
-- Public read services and API routes for homepage, projects, experience, skills, achievements, recruiter lenses, and basic search.
-- Database-driven public homepage, work/project case studies, experience, capabilities, archive, recruiter lens, about, and contact pages.
-- Relational seed content for the documented projects, skills, achievement, learning, and recruiter priorities.
-- Password/session-based admin access and a versioned, audited project editor.
-- Basic SEO metadata, `robots.txt`, and dynamic sitemap.
+## Verification
 
-Still to build:
+```bash
+pnpm lint
+pnpm exec tsc --noEmit
+pnpm exec prisma validate
+pnpm exec next build --webpack
+```
 
-- CMS editors for every remaining content type, media/document upload and ordering, homepage/lens curation UI, and full publish workflow UI.
-- Related-content views, interactive archive search UI, analytics, accessible motion system, selective 3D, and full automated test coverage.
+## Deployment
 
-See `docs/foundation-reconciliation.md` for the current reconciliation notes and next build step.
+The target topology is Vercel, managed PostgreSQL, and S3-compatible object storage. Before production deploy, set production environment variables, configure database/media backups and object-storage access control, set the domain, and use a separate staging database.
 
-## Design System
+## Remaining work
 
-Palette tokens (defined in `globals.css`):
-- `--paper`: #F7F6F2 (warm off-white background)
-- `--ink`: #111111 (near-black text)
-- `--accent`: #3157FF (cobalt blue signature)
-- `--surface`: #FFFFFF (card surfaces)
-- `--line`: #D9D9D4 (subtle borders)
-- `--muted`: #6F706D (secondary text)
-
-Typography:
-- **Display**: Instrument Serif (headlines)
-- **UI/Body**: Plus Jakarta Sans (interface text)
-- **Technical**: IBM Plex Mono (metadata, tags, metrics)
+Major remaining areas are object-storage upload and signed restricted delivery, preview/restore UI across every content type, organization/activity/education/profile operations, full-text search, generalized structured SEO, tests, analytics, deployment configuration, responsive QA, and intentional motion/3D polish.
