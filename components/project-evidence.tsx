@@ -1,5 +1,5 @@
-import Image from "next/image";
 import type { BlockType, Prisma } from "@prisma/client";
+import { MediaRenderer } from "@/components/media-renderer";
 
 type Metric = { label: string; value: string; unit?: string };
 type Block = { id: string; type: BlockType; data: Prisma.JsonValue };
@@ -11,7 +11,7 @@ export function ProjectEvidence({ metrics, blocks, media, documents }: { metrics
   return <>
     {normalizedMetrics.length > 0 && <section className="case-evidence" aria-labelledby="project-metrics"><p className="eyebrow">Evidence</p><h2 id="project-metrics">The work in numbers.</h2><div className="metric-grid">{normalizedMetrics.map((metric) => <article key={`${metric.label}-${metric.value}`}><b>{metric.value}</b><span>{metric.unit}</span><p>{metric.label}</p></article>)}</div></section>}
     {blocks.length > 0 && <section className="case-evidence project-blocks" aria-label="Project story">{blocks.map((block) => <ContentBlock block={block} key={block.id} />)}</section>}
-    {media.length > 0 && <section className="case-evidence" aria-labelledby="project-gallery"><p className="eyebrow">Documentation</p><h2 id="project-gallery">A closer look.</h2><div className="project-gallery">{media.filter(({ media: item }) => item.type === "IMAGE").map(({ id, media: item, caption }) => <figure key={id}><Image src={item.url} alt={item.altText ?? item.title ?? "Project documentation"} width={1200} height={900} unoptimized /><figcaption>{caption ?? item.caption ?? item.title}</figcaption></figure>)}</div></section>}
+    {media.length > 0 && <section className="case-evidence" aria-labelledby="project-gallery"><p className="eyebrow">Documentation</p><h2 id="project-gallery">A closer look.</h2><div className="project-gallery">{media.map(({ id, media: item, caption }) => <MediaRenderer key={id} asset={item} caption={caption} />)}</div></section>}
     {documents.length > 0 && <section className="case-evidence documents" aria-labelledby="project-documents"><p className="eyebrow">Documents</p><h2 id="project-documents">Supporting material.</h2>{documents.map(({ id, document }) => <a key={id} href={document.fileUrl} target="_blank" rel="noreferrer"><span>Document</span><b>{document.title}</b>{document.description && <small>{document.description}</small>}<i>↗</i></a>)}</section>}
   </>;
 }
