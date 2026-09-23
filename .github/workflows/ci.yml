@@ -45,6 +45,8 @@ jobs:
         uses: actions/setup-node@v5
         with:
           node-version: 24
+          # pnpm is installed in the next step; do not ask setup-node to cache it first.
+          package-manager-cache: false
       - name: Install pnpm CLI
         run: npm install --global pnpm@12.4.2
       - name: Confirm toolchain
