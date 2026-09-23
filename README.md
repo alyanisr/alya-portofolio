@@ -70,7 +70,9 @@ pnpm exec next build --webpack
 
 ## Deployment
 
-The target topology is Vercel, managed PostgreSQL, and S3-compatible object storage. Before production deploy, set production environment variables, configure database/media backups and object-storage access control, set the domain, and use a separate staging database.
+The target topology is Vercel, managed PostgreSQL, and S3-compatible object storage. GitHub Actions runs lint, type checking, Prisma validation, an isolated PostgreSQL migration/seed, and a production webpack build for every pull request and push to `master`. Vercel Git integration deploys `master` after it receives the push.
+
+See [deployment runbook](docs/deployment.md) for the one-time Vercel/database setup, environment variables, migration, health verification, and release process.
 
 ## Remaining work
 

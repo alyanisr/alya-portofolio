@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify application
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: alya_portfolio_ci
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports: [5432:5432]
+        options: >-
+          --health-cmd "pg_isready -U postgres -d alya_portfolio_ci"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/alya_portfolio_ci
+      DIRECT_URL: postgresql://postgres:postgres@localhost:5432/alya_portfolio_ci
+      AUTH_SECRET: ci-only-secret-that-is-at-least-32-characters-long
+      ADMIN_EMAIL: ci@example.test
+      ADMIN_NAME: CI Admin
+      ADMIN_PASSWORD: ci-only-admin-password
+      NEXT_PUBLIC_APP_URL: https://ci.example.test
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12.4.2
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Validate Prisma schema
+        run: pnpm exec prisma validate
+      - name: Apply schema to isolated CI database
+        run: pnpm exec prisma migrate deploy
+      - name: Seed isolated CI database
+        run: pnpm db:seed
+      - name: Lint
+        run: pnpm lint
+      - name: Type check
+        run: pnpm exec tsc --noEmit
+      - name: Production build
+        run: pnpm exec next build --webpack
